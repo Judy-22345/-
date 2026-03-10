@@ -1,7 +1,4 @@
 export const caseTypes = [
-  { value: 'civil', label: '民事诉讼' },
-  { value: 'criminal', label: '刑事诉讼' },
-  { value: 'administrative', label: '行政诉讼' },
   { value: 'arbitration', label: '仲裁' },
   { value: 'labor', label: '劳动仲裁' },
   { value: 'intellectual', label: '知识产权' },

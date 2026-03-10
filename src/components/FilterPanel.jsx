@@ -72,6 +72,8 @@ export default function FilterPanel({ filters, onFilterChange, onClearFilters, c
             {caseTypes.map(type => (
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
+            {/* 添加 civil 选项以兼容旧数据 */}
+            <option value="civil" style={{ display: 'none' }}>其他</option>
           </select>
         </div>
 

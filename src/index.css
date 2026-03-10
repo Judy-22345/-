@@ -262,6 +262,29 @@ body {
   background: var(--bg-hover);
 }
 
+/* 滚动按钮 */
+.scroll-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.scroll-btn:hover {
+  background: #1c9bc9;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* 冻结列样式 */
 .sticky-col {
   position: sticky;

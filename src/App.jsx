@@ -93,7 +93,11 @@ function App() {
 
       // 筛选匹配
       const matchCaseNumber = filters.caseNumber === 'all' || c.caseNumber === filters.caseNumber
-      const matchType = filters.type === 'all' || c.caseType === filters.type
+      // 处理 civil 和 other 类型的兼容
+      const matchType = filters.type === 'all' ||
+        c.caseType === filters.type ||
+        (filters.type === 'other' && c.caseType === 'civil') ||
+        (filters.type === 'civil' && c.caseType === 'other')
       const matchStatus = filters.status === 'all' || c.status === filters.status
       const matchCause = filters.cause === 'all' || c.caseCause === filters.cause
       const matchCourt = filters.court === 'all' || c.court === filters.court

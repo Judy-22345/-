@@ -1,7 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { caseStatuses, caseTypes } from '../data/constants'
 
+const ITEMS_PER_PAGE = 10
+
 export default function CaseList({ cases, onSelectCase, onNewCase, onManageFiles }) {
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const totalPages = Math.max(1, Math.ceil(cases.length / ITEMS_PER_PAGE))
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, cases.length)
+  const currentCases = cases.slice(startIndex, endIndex)
+
   function getStatusBadge(status) {
     const statusInfo = caseStatuses.find(s => s.value === status)
     const colors = {
@@ -36,7 +45,29 @@ export default function CaseList({ cases, onSelectCase, onNewCase, onManageFiles
   }
 
   function getCaseTypeLabel(type) {
+    // 将 civil 类型映射为 other（其他）
+    if (type === 'civil') return '其他'
     return caseTypes.find(t => t.value === type)?.label || type
+  }
+
+  function handlePageChange(newPage) {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage)
+    }
+  }
+
+  // 生成页码列表
+  const pageNumbers = []
+  const maxVisiblePages = 5
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+
+  if (endPage - startPage < maxVisiblePages - 1) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1)
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i)
   }
 
   return (
@@ -61,77 +92,147 @@ export default function CaseList({ cases, onSelectCase, onNewCase, onManageFiles
             </tr>
           </thead>
           <tbody>
-          {cases.length === 0 ? (
-            <tr>
-              <td colSpan="13" style={{ textAlign: 'center', padding: '40px' }}>
-                <div className="empty-state">
-                  <div className="empty-state-icon">📁</div>
-                  <div className="empty-state-title">暂无案件</div>
-                  <div className="empty-state-desc">点击右上角"新建案件"添加第一个案件</div>
-                </div>
-              </td>
-            </tr>
-          ) : (
-            cases.map((caseItem) => {
-              const fileCount = (caseItem.files?.party || []).length +
-                               (caseItem.files?.court || []).length +
-                               (caseItem.files?.opponent || []).length
+            {cases.length === 0 ? (
+              <tr>
+                <td colSpan="13" style={{ textAlign: 'center', padding: '40px' }}>
+                  <div className="empty-state">
+                    <div className="empty-state-icon">📁</div>
+                    <div className="empty-state-title">暂无案件</div>
+                    <div className="empty-state-desc">点击右上角"新建案件"添加第一个案件</div>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              currentCases.map((caseItem) => {
+                const fileCount = (caseItem.files?.party || []).length +
+                                 (caseItem.files?.court || []).length +
+                                 (caseItem.files?.opponent || []).length
 
-              return (
-                <tr key={caseItem.id} onClick={() => onSelectCase(caseItem)}>
-                  <td className="sticky-col sticky-left" style={{ fontWeight: 500, color: '#2f80ed' }}>{caseItem.caseNumber}</td>
-                  <td className="sticky-col">{caseItem.caseCause}</td>
-                  <td className="sticky-col">{getCaseTypeLabel(caseItem.caseType)}</td>
-                  <td className="sticky-col">{caseItem.plaintiff}</td>
-                  <td className="sticky-col">{caseItem.defendant}</td>
-                  <td className="sticky-col" style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {caseItem.agent || '-'}
-                  </td>
-                  <td className="sticky-col" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {caseItem.court}
-                  </td>
-                  <td className="sticky-col">{caseItem.acceptanceDate || '-'}</td>
-                  <td className="sticky-col">{caseItem.trialDate || '-'}</td>
-                  <td style={{ textAlign: 'right', minWidth: '100px' }}>{formatCurrency(caseItem.disputeAmount)}</td>
-                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: '150px' }}>
-                    {caseItem.progress || '-'}
-                  </td>
-                  <td className="sticky-col sticky-right-1">{getStatusBadge(caseItem.status)}</td>
-                  <td className="sticky-col sticky-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onManageFiles(caseItem)
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px',
-                        padding: '4px 8px',
-                        background: fileCount > 0 ? 'var(--accent-color)' : 'var(--bg-secondary)',
-                        color: fileCount > 0 ? '#fff' : 'var(--text-secondary)',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        width: '100%',
-                        transition: 'all 0.15s ease'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = fileCount > 0 ? '#1a5fb4' : 'var(--bg-hover)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = fileCount > 0 ? 'var(--accent-color)' : 'var(--bg-secondary)'}
-                    >
-                      <span>📎</span>
-                      {fileCount > 0 && <span style={{ fontWeight: 600 }}>{fileCount}</span>}
-                    </button>
-                  </td>
-                </tr>
-              )
-            })
-          )}
-        </tbody>
-      </table>
+                return (
+                  <tr key={caseItem.id} onClick={() => onSelectCase(caseItem)}>
+                    <td className="sticky-col sticky-left" style={{ fontWeight: 500, color: '#2f80ed' }}>{caseItem.caseNumber}</td>
+                    <td className="sticky-col">{caseItem.caseCause}</td>
+                    <td className="sticky-col">{getCaseTypeLabel(caseItem.caseType)}</td>
+                    <td className="sticky-col">{caseItem.plaintiff}</td>
+                    <td className="sticky-col">{caseItem.defendant}</td>
+                    <td className="sticky-col" style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {caseItem.agent || '-'}
+                    </td>
+                    <td className="sticky-col" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {caseItem.court}
+                    </td>
+                    <td className="sticky-col">{caseItem.acceptanceDate || '-'}</td>
+                    <td className="sticky-col">{caseItem.trialDate || '-'}</td>
+                    <td style={{ textAlign: 'right', minWidth: '100px' }}>{formatCurrency(caseItem.disputeAmount)}</td>
+                    <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: '150px' }}>
+                      {caseItem.progress || '-'}
+                    </td>
+                    <td className="sticky-col sticky-right-1">{getStatusBadge(caseItem.status)}</td>
+                    <td className="sticky-col sticky-right">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onManageFiles(caseItem)
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          padding: '4px 8px',
+                          background: fileCount > 0 ? 'var(--accent-color)' : 'var(--bg-secondary)',
+                          color: fileCount > 0 ? '#fff' : 'var(--text-secondary)',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          width: '100%',
+                          transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = fileCount > 0 ? '#1a5fb4' : 'var(--bg-hover)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = fileCount > 0 ? 'var(--accent-color)' : 'var(--bg-secondary)'}
+                      >
+                        <span>📎</span>
+                        {fileCount > 0 && <span style={{ fontWeight: 600 }}>{fileCount}</span>}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* 分页控件 */}
+      {cases.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: '16px',
+          borderTop: '1px solid var(--border-color)'
+        }}>
+          <button
+            className="btn"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+            style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+            title="首页"
+          >
+            ⏮
+          </button>
+          <button
+            className="btn"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+            title="上一页"
+          >
+            ◀
+          </button>
+
+          {pageNumbers.map(num => (
+            <button
+              key={num}
+              className="btn"
+              onClick={() => handlePageChange(num)}
+              style={{
+                background: num === currentPage ? 'var(--accent-color)' : 'var(--bg-primary)',
+                color: num === currentPage ? '#fff' : 'var(--text-primary)',
+                borderColor: 'var(--border-color)',
+                minWidth: '36px'
+              }}
+            >
+              {num}
+            </button>
+          ))}
+
+          <button
+            className="btn"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+            title="下一页"
+          >
+            ▶
+          </button>
+          <button
+            className="btn"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+            title="末页"
+          >
+            ⏭
+          </button>
+
+          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginLeft: '12px' }}>
+            共 {totalPages} 页，{cases.length} 条记录
+          </span>
+        </div>
+      )}
     </div>
   )
 }
