@@ -189,6 +189,14 @@ function App() {
     }
   }
 
+  function handleClearAllCases() {
+    if (confirm('确定要清空所有案件数据吗？此操作不可恢复！')) {
+      setCases([])
+      localStorage.removeItem('legalCases')
+      setSelectedCase(null)
+    }
+  }
+
   function handleAddTimeline(caseData) {
     setIsTimelineFormOpen(true)
   }
@@ -332,6 +340,9 @@ function App() {
                 </button>
                 <button className="btn" onClick={() => setIsExcelImportOpen(true)}>
                   📥 Excel 导入
+                </button>
+                <button className="btn" onClick={handleClearAllCases} style={{ color: 'var(--danger-color)', borderColor: 'var(--danger-color)' }}>
+                  🗑️ 清空数据
                 </button>
                 <button className="btn btn-primary" onClick={() => { setEditingCase(null); setIsFormOpen(true) }}>
                   + 新建案件
